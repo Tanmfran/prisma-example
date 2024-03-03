@@ -1,0 +1,62 @@
+// schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // Or your database of choice, e.g., "mysql", "sqlite", "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+model FormTemplate {
+  id          Int                 @id @default(autoincrement())
+  name        String
+  description String?
+  fields      FormFieldTemplate[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Form      Form[]
+}
+
+model FormFieldTemplate {
+  id             Int     @id @default(autoincrement())
+  formTemplateId Int
+  label          String
+  fieldType      String // Consider using an Enum for specific field types (e.g., TEXT, NUMBER, DATE, etc.)
+  placeholder    String?
+  required       Boolean @default(false)
+  order          Int // Helps in maintaining the order of the fields
+
+  formTemplate FormTemplate @relation(fields: [formTemplateId], references: [id])
+
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  FormFieldValue FormFieldValue[]
+}
+
+model Form {
+  id             Int              @id @default(autoincrement())
+  formTemplateId Int
+  name           String? // Optional, in case you want to override the template name for specific instances
+  fields         FormFieldValue[]
+
+  formTemplate FormTemplate @relation(fields: [formTemplateId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model FormFieldValue {
+  id              Int    @id @default(autoincrement())
+  formId          Int
+  fieldTemplateId Int
+  value           String // Consider storing complex values as JSON or using different columns for different data types
+
+  form          Form              @relation(fields: [formId], references: [id])
+  fieldTemplate FormFieldTemplate @relation(fields: [fieldTemplateId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
